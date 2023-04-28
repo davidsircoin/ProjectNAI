@@ -14,7 +14,7 @@ t_1000 = 1 # temperature 1000m away from the plume
 psu_0 = 34.1 # salinity at the plume
 psu_1000 = 35 # salinity 1000m away from the plume
 
-turb = 100 # turbulence constant    s
+turb = 100 # turbulence constant
 
 
 
