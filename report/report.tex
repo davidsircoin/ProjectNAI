@@ -1,5 +1,8 @@
 \documentclass{report}
 
+\usepackage{amsmath}
+\usepackage[thinc]{esdiff}
+
 \title{Project Report — Ice-Ocean Interaction}
 \author{David Sermoneta, Emma Bastås}
 
@@ -7,6 +10,35 @@
 
 \maketitle
 
+The given equation:
+
+\begin{gather*}
+  \diffp{C}{t} = \nu \diffp{C}{{x^2}} - \diffp{u(x)C}{x} = 0 \\
+  \diffp{C}{t} = 0 \quad \text{(We are in steady-state)} \\
+\end{gather*}
+
+Simplification:
+
+\begin{gather}
+  \nu y'' - u'y - uy' = 0 \label{eq}\tag{$\star$}\text{.}
+\end{gather}
+
+We use centered difference to approximate $y'$ and $y''$:
+
+\begin{gather*}
+  y_i' = \frac{y_{i+1} - y_{i-1}}{2h} \\[3pt]
+  y_i'' = \frac{y_{i+1} - 2y_i + y_{i-1}}{h^2}
+\end{gather*}
+
+Thus:
+
+\begin{gather*}
+  \text{(\ref{eq})} \implies
+  \nu\frac{y_{i+1} - 2y_i + y_{i-1}}{h^2}
+  - u_i'y
+  -u_i\frac{y_{i+1} - y_{i-1}}{2h} = \\
+  \biggl(\frac{\nu}{h^2} + \frac{u_i}{2h}\biggr)y_{i-1} - \biggl(\frac{2\nu}{h^2} + u_i'\biggr) + \biggl(\frac{\nu}{h^2} - \frac{u_i}{2h}\biggr)y_{i+1} = 0
+\end{gather*}
 
 
 \end{document}
