@@ -57,7 +57,18 @@ def main():
     ax[2,1].plot(xs, ys_salinity_E, label=f'Salinity (PSU) N={N}')
     fig.legend()
     plt.show()
+    print(ys_temperature_D)
 
+    ys_density_D = density_approximation(ys_temperature_D, ys_salinity_D, xs)
+    ys_density_E = density_approximation(ys_temperature_E, ys_salinity_E, xs)
+
+    print(ys_density_D)
+
+    fig, ax = plt.subplots(2)
+    ax[0].plot(xs, ys_density_D, label = f'Density N={N}')
+    ax[1].plot(xs, ys_density_E, label = f'Density N={N}')
+    fig.legend()
+    plt.show()
 
 
 # Numerical solver of ODE. Still need to check if the entries are completely correct.
@@ -138,14 +149,25 @@ def assemble_F(leftbc, rightbc, N):
 
 
 
-#def show_ODE_solution():
-#    x1, y_h1, h1 = ComputeNumericalSolution(100, -1.1, 1.0) # Temperature
-#    x2, y_h2, h2 = ComputeNumericalSolution(7, 34.1, 35) # Salinity
-#    fig, ax = plt.subplots(1,2)
-#    ax[0].plot(x1,y_h1, color = 'red', label = f'Temperature h={h1}')
-#    ax[1].plot(x2, y_h2, color = 'pink', label = f'Salinity (PSU) h={h2}')
-#    fig.legend()
-#    plt.show()
+def density_approximation(temp, sal, xs):
+    # Parameters
+    rho_ref = 1027.51 #kg/m³            in situ density
+    alpha_lin = 3.733*10**(-5) #◦C      Thermal expansion coefficient
+    beta_lin = 7.843*10**(-4) #PSU      Salinity contraction coefficient
+    T_ref = -1 # ◦C                     Reference temperature
+    S_ref = 34.2 #PSU                   Reference salinity
+
+    density = []
+    def equation(x):
+        return rho_ref*(1 - alpha_lin*(temp[x] - T_ref) + beta_lin*(sal[x] - S_ref))
+    
+    for x in range(len(xs)):
+        print(equation(x))
+        density.append(equation(x))
+        
+    return np.array(density)
+        
+
 
 
 
