@@ -26,7 +26,6 @@ turb = 100 # turbulence constant
 # Since we also need the derivative of the velocity later on linear interpolation isn't an option.
 velocity = sp.interpolate.CubicSpline(distance_from_plume, measured_velocity)
 velocity_p = velocity.derivative()
-x = 0
 
 
 def main():
@@ -125,7 +124,7 @@ def solve_ODE_v2(velocities, accelerations, N, h, leftbc, rightbc):
 
 def solve_ODE_v3(velocities, velocity_ps, N, h, leftbc, rightbc):
     A = assembly_of_A(N, h, turb, velocities, velocity_ps)
-    F = assembly_of_F(N, h, leftbc, rightbc)
+    F = assembly_of_F(N, h, turb, velocities, leftbc, rightbc)
     return np.linalg.solve(A, F)
 
 
@@ -140,15 +139,16 @@ def assemble_A(velocities, accelerations, N, h):
         #vel = velocity_f(xs[i])*h
         #velp = velocity_fp(xs[i])*h
 
-        #A[i, i-1] = (turb / h2) + (vel / (2*h))
-        #A[i, i] =  (-2*turb / h2) - velp
-        #A[i, i+1] = (turb / h2) - (vel / (2*h))
+        A[i, i-1] = (turb / h2) + (velocities[i] / (2*h))
+        A[i, i] =  (-2*turb / h2) - accelerations[i]
+        A[i, i+1] = (turb / h2) - (velocities[i] / (2*h))
 
-        A [i , i - 1 ] = (1/2)*(2*turb + h*velocities[i])
-        A [i , i ] =  -2*turb + h2*accelerations[i]
-        A [i , i + 1 ] = (1/2)*(2*turb - h*velocities[i])
+        #A [i , i - 1 ] = (1/2)*(2*turb + h*velocities[i])
+        #A [i , i ] =  -2*turb + h2*accelerations[i]
+        #A [i , i + 1 ] = (1/2)*(2*turb - h*velocities[i])
 
-    return (1/h2)*A
+    #return (1/h2)*A
+    return A
 
 
 
@@ -184,28 +184,28 @@ def assembly_of_A(N, h, turb, v, vp): # Finite Difference Scheme for second orde
     h2 = h**2
     A = np . zeros (( N , N ) )
 
-    A [0 , 0 ] = -2*turb + h2*vp[0]
+    A [0 , 0 ] = -2*turb - h2*vp[0]
     A [0 , 1 ] = (1/2)*(2*turb - h*v[0])
 
     for i in range (1 , N - 1 ) :
         A [i , i - 1 ] = (1/2)*(2*turb + h*v[i])
-        A [i , i ] =  -2*turb + h2*vp[i]
+        A [i , i ] =  -2*turb -  h2*vp[i]
         A [i , i + 1 ] = (1/2)*(2*turb - h*v[i])
 
 
     A [ N - 1 , N - 2 ] = (1/2)*(2*turb + h*v[N-1])
     A [ N - 1 , N - 1 ] = -2*turb + h2*vp[N-1]
 
-    A = (1/h**2)*A
+    A = (1/h2)*A
     return A
 
-def assembly_of_F(N, h, leftbc, rightbc):
+def assembly_of_F(N, h, turb, velocity, leftbc, rightbc):
     h2 = h**2
     F = np.zeros(N)
-    F[0] = 0 - leftbc/h2
+    F[0] = 0 - leftbc*(1/(2*h2))*(2*turb + h * velocity[1])
     for i in range(1, N-1):
         F[i] = 0
-    F[N-1] = 0 - rightbc/h2
+    F[N-1] = 0 - rightbc*(1/(2*h2))*(2*turb - h * velocity[N-2])
     return F
 
 
