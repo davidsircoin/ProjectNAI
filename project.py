@@ -103,6 +103,11 @@ def assembly_of_F(N, h, turb, velocity, leftbc, rightbc):
     F[N-1] = 0 - rightbc*(1/(2*h2))*(2*turb - h * velocity[N-2])
     return F
 
+def approximate_derivative(vel, N):
+    dx = 1/N
+    x = np.linspace(0,1,N)
+    xpdx = np.array([n + dx for n in x])
+    return (vel(xpdx) - (x))/dx
 
 if __name__ == "__main__":
     main()
