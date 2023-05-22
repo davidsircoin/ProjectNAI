@@ -31,7 +31,6 @@ velocity_p = velocity.derivative()
 def main():
     N = 100
     xs, h = np.linspace(0, 1000, N, retstep=True)
-    print(h)
     velocities = list(map(velocity, xs))
     accelerations = list(map(velocity_p, xs))
 
@@ -70,7 +69,6 @@ def density_approximation(temp, sal, xs):
         return rho_ref*(1 - alpha_lin*(temp[x] - T_ref) + beta_lin*(sal[x] - S_ref))
     
     for x in range(len(xs)):
-        print(equation(x))
         density.append(equation(x))
         
     return np.array(density)
