@@ -26,7 +26,6 @@ turb = 100 # turbulence constant
 # Since we also need the derivative of the velocity later on linear interpolation isn't an option.
 velocity = sp.interpolate.CubicSpline(distance_from_plume, measured_velocity)
 velocity_p = velocity.derivative()
-x = 0
 
 
 def main():
@@ -54,7 +53,7 @@ def main():
 
 def solve_ODE(velocities, velocity_ps, N, h, leftbc, rightbc):
     A = assembly_of_A(N, h, turb, velocities, velocity_ps)
-    F = assembly_of_F(N, h, leftbc, rightbc)
+    F = assembly_of_F(N, h, turb, velocities, leftbc, rightbc)
     return np.linalg.solve(A, F)
 
 
@@ -94,17 +93,16 @@ def assembly_of_A(N, h, turb, v, vp): # Finite Difference Scheme for second orde
     A [ N - 1 , N - 2 ] = (1/2)*(2*turb + h*v[N-1])
     A [ N - 1 , N - 1 ] = -2*turb - h2*vp[N-1]
 
-    A = (1/h**2)*A
+    A = (1/h2)*A
     return A
 
-
-def assembly_of_F(N, h, leftbc, rightbc):
+def assembly_of_F(N, h, turb, velocity, leftbc, rightbc):
     h2 = h**2
     F = np.zeros(N)
-    F[0] = 0 - leftbc/h2
+    F[0] = 0 - leftbc*(1/(2*h2))*(2*turb + h * velocity[1])
     for i in range(1, N-1):
         F[i] = 0
-    F[N-1] = 0 - rightbc/h2
+    F[N-1] = 0 - rightbc*(1/(2*h2))*(2*turb - h * velocity[N-2])
     return F
 
 
