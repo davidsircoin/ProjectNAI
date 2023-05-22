@@ -24,35 +24,37 @@ turb = 100 # turbulence constant
 
 # We use picewise cubic interpolation for the velocity data-points
 # Since we also need the derivative of the velocity later on linear interpolation isn't an option.
-velocity = sp.interpolate.CubicSpline(distance_from_plume, measured_velocity)
-velocity_p = velocity.derivative()
-
+velocity_interpolation= sp.interpolate.CubicSpline(distance_from_plume, measured_velocity)
 
 def main():
     N = 100
     xs, h = np.linspace(0, 1000, N, retstep=True)
-    velocities = list(map(velocity, xs))
-    accelerations = list(map(velocity_p, xs))
 
-    ys_temperature = [t_0, *solve_ODE(velocities, accelerations, N-2, h, t_0, t_1000), t_1000]
-    ys_salinity = [psu_0, *solve_ODE(velocities, accelerations, N-2, h, psu_0, psu_1000), psu_1000]
+    # Descretize the velocity interpolation
+    velocities = list(map(velocity_interpolation, xs))
+
+    # Aproximate the derivative of the interpolated velocity function wrt x
+    velocities_p = approximate_derivative(velocity_interpolation, N)
+
+    ys_temperature = [t_0, *solve_ODE(velocities, velocities_p, N-2, h, t_0, t_1000), t_1000]
+    ys_salinity = [psu_0, *solve_ODE(velocities, velocities_p, N-2, h, psu_0, psu_1000), psu_1000]
     ys_density = density_approximation(ys_temperature, ys_salinity, xs)
 
     fig, ax = plt.subplots(3,2)
     ax[0,0].plot(xs, velocities, label=f'v')
     ax[0,0].scatter(distance_from_plume, measured_velocity)
-    ax[0,1].plot(xs, accelerations, label=f'v\'')
+    ax[0,1].plot(xs, velocities_p, label=f'v\'')
     ax[1,0].plot(xs, ys_temperature, label = f'Temperature N={N}', color = 'red')
     ax[1,1].plot(xs, ys_salinity, label = f'Salinity (PSU) N={N}', color = 'blue')
-    ax[2,0].plot(xs, ys_density, label = f'Density N={N}')
+    ax[2,0].plot(xs, ys_density, label = f'Density N={N}', color="pink")
 
     fig.legend()
     plt.show()
 
 
-def solve_ODE(velocities, velocity_ps, N, h, leftbc, rightbc):
-    A = assembly_of_A(N, h, turb, velocities, velocity_ps)
-    F = assembly_of_F(N, h, turb, velocities, leftbc, rightbc)
+def solve_ODE(velocities, velocities_p, N, h, leftbc, rightbc):
+    A = assembly_of_A(N, h, velocities, velocities_p)
+    F = assembly_of_F(N, h, velocities, leftbc, rightbc)
     return np.linalg.solve(A, F)
 
 
@@ -74,8 +76,7 @@ def density_approximation(temp, sal, xs):
     return np.array(density)
         
 
-
-def assembly_of_A(N, h, turb, v, vp): # Finite Difference Scheme for second order d
+def assembly_of_A(N, h, v, vp): # Finite Difference Scheme for second order d
     h2 = h**2
     A = np . zeros (( N , N ) )
 
@@ -94,7 +95,8 @@ def assembly_of_A(N, h, turb, v, vp): # Finite Difference Scheme for second orde
     A = (1/h2)*A
     return A
 
-def assembly_of_F(N, h, turb, velocity, leftbc, rightbc):
+
+def assembly_of_F(N, h, velocity, leftbc, rightbc):
     h2 = h**2
     F = np.zeros(N)
     F[0] = 0 - leftbc*(1/(2*h2))*(2*turb + h * velocity[1])
@@ -103,11 +105,13 @@ def assembly_of_F(N, h, turb, velocity, leftbc, rightbc):
     F[N-1] = 0 - rightbc*(1/(2*h2))*(2*turb - h * velocity[N-2])
     return F
 
+
 def approximate_derivative(vel, N):
     dx = 1/N
-    x = np.linspace(0,1,N)
+    x = np.linspace(0, 1000, N)
     xpdx = np.array([n + dx for n in x])
-    return (vel(xpdx) - (x))/dx
+    return (vel(xpdx) - vel(x))/dx
 
+ 
 if __name__ == "__main__":
     main()
