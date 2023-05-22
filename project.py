@@ -41,14 +41,14 @@ def main():
     ys_density = density_approximation(ys_temperature, ys_salinity, xs)
 
     fig, ax = plt.subplots(3,2)
+    fig.delaxes(ax[2,1])
     ax[0,0].plot(xs, velocities, label=f'v')
     ax[0,0].scatter(distance_from_plume, measured_velocity)
     ax[0,1].plot(xs, velocities_p, label=f'v\'')
     ax[1,0].plot(xs, ys_temperature, label = f'Temperature N={N}', color = 'red')
     ax[1,1].plot(xs, ys_salinity, label = f'Salinity (PSU) N={N}', color = 'blue')
     ax[2,0].plot(xs, ys_density, label = f'Density N={N}', color="pink")
-
-    fig.legend()
+    fig.legend(loc = 'lower right')
     plt.show()
 
 
